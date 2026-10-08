@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset=utf-8 />
+	<title>Map Template Browser Title</title>
+	<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.css" />
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
+	<link href="https://fonts.googleapis.com/css?family=Noto+Sans" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Lora" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"> 
+
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			background: "whitesmoke";
+			font-family: "Times New Roman", georgia, serif;
+			color: #3d3d3d;
+		}
+
+		h1 {
+			position: absolute;
+			margin-top: 0;
+			top: 10px;
+			left: 45px;
+			font-size: 2em;
+			font-family: "Cambria", georgia, serif;
+			letter-spacing: .04em;
+			padding: 10px 15px;
+			background: rgba(256, 256, 256);
+			border: 1px solid grey;
+			border-radius: 3px;
+			z-index: 800;
+		}
+
+		h2 {
+			font-family: "Cambria", georgia, serif;
+			letter-spacing: .04em;
+		}
+
+		#map {
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			width: 100%;
+		}
+
+		section {
+			position: absolute;
+			bottom: 0;
+			left: 10px;
+			width: 280px;
+			margin: 20px auto;
+			padding: 0 15px;
+			background: rgba(256, 256, 256);
+			border: 1px solid grey;
+			border-radius: 3px;
+			z-index: 800;
+		}
+
+		.info-box {
+			position: absolute !important;
+			top: 10px !important;
+			right: 10px !important;
+			bottom: auto !important;
+			left: auto !important;
+
+			width: 250px;
+			height: auto !important;
+
+			margin: 0 !important;
+			padding: 10px 15px;
+
+			background: white;
+			border: 1px solid grey;
+			border-radius: 3px;
+
+			z-index: 800;
+			box-sizing: border-box;
+}
+
+.info-box h2 {
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+.info-box p {
+	margin-top: 8px;
+	margin-bottom: 8px;
+}
+
+		p {
+			font-size: .9em;
+			line-height: 1.5em;
+		}
+
+		a {
+			color: #005daa;
+			text-decoration: none;
+		}
+
+		a:hover {
+			text-decoration: underline;
+		}
+
+		.start-marker {
+	color: green;
+	font-size: 32px;
+	text-align: center;
+}
+
+.end-marker {
+	color: red;
+	font-size: 32px;
+	text-align: center;
+}
+
+.leaflet-tooltip {
+	background-color: white;
+	border: 2px solid #555;
+	border-radius: 5px;
+	padding: 10px;
+	width: 250px;
+	white-space: normal;
+	font-family: "Noto Sans", sans-serif;
+	font-size: 14px;
+	color: #3d3d3d;
+	box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+}
+	</style>
+</head>
+
+<body>
+
+	<h1>A day in Heliopolis</h1>
+
+	<div id='map'></div>
+
+	<section>
+		<h2>Suggested itinerary for a day in Heliopolis</h2>
+
+		<p>Heliopolis is a Northeastern district of Cairo, Egypt, known for its historical significance and modern urban development. Originally known as Iunu and renamed Heliopolis (or "City of the Sun") by the Greeks, it served as Egypt's premier spiritual hub for sun god worship. In 1905, Belgian industrialist Baron Édouard Empain reinvented the area as a modern, upscale garden suburb featuring a distinct blend of European, Moorish, and Hindu-inspired architecture. Today, its unique legacy thrives through iconic landmarks like the arcaded Korba district and the beautifully restored Baron Empain Palace. </p>
+
+		<p>Heliopolis is also known in Arabic as Masr El Gedida, meaning "New Egypt".</p>
+
+		<p>Text provided by <a href="https://www.afroasiantravel.com/en/blogs/discover-heliopolis-cairo">Discover Heliopolis Cairo.</a></p>
+		<p>Map authored by Megan Clarke.</p>
+
+	</section>
+
+	<section class="info-box">
+		<h2>More About Heliopolis</h2>
+
+	<p>After living in Heliopolis for over two months, I wanted to share my personal itinerary for how I would spend a day there. In Egypt, walking and just watching what happens on the street is half the fun so I tried to make this custom route walkable, even though there are some longer stretches.</p>
+
+	<p>I like to start the day off by seeing a few historic landmarks, like the palace and the cathedral. There are several cafe's and places to grab a quick pastry and cup of coffee which you can't miss! Then I enjoy talking with locals in the park. After, I made my way to Korba square where you can go shopping in all the colorful shops and markets. It is a great way to spend the evening watching locals while grabbing a delicious bite to eat from all the available street vendors. </p>
+</section>
+
+
+	<script src="http://code.jquery.com/jquery-3.1.1.min.js"></script>
+	<script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
+
+	<script src="data/route.js"></script>
+
+	<script>
+
+//options to be used when creating the map
+		var options = {
+			center: [36.08403, -81.83015],
+			zoom: 16
+		}
+
+//creation of the Leaflet map
+		var map = L.map('map', options);
+		L.control.scale({
+    imperial: true,
+    metric: false
+}).addTo(map);
+
+//request to load basemap
+var Esri_WorldStreetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012012 | Map Author: Megan Clarke'
+}).addTo(map);
+
+/*
+//string content to be inserted into a tooltip
+
+//create a Leaflet marker, centered on the map's center.
+		L.marker(map.getCenter())
+			.bindTooltip(message) //bind the tooltip and message to the marker
+			.addTo(map) // add the marker to the map`
+			.openTooltip(); // open the tooltip
+
+			*/ 
+
+			var myRoute = L.geoJson(data, {
+				filter: function(feature){
+					if(feature.geometry.type == "LineString"){
+						return feature;
+					}
+				},
+				style: function(feature) {
+					return {
+						color: "royalblue",
+						weight: 6,
+						opacity: 100,
+						dashArray: "5, 10"
+					}
+				}
+}).addTo(map);
+
+map.fitBounds(myRoute.getBounds());
+
+// Custom icons for the beginning and end of the route
+var startIcon = L.icon({
+	iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.1/images/marker-icon.png',
+	iconSize: [25, 41],
+	iconAnchor: [12, 41],
+	popupAnchor: [1, -34]
+});
+
+var endIcon = L.icon({
+	iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.1/images/marker-icon.png',
+	iconSize: [25, 41],
+	iconAnchor: [12, 41],
+	popupAnchor: [1, -34]
+});
+
+var points = data.features.filter(function(feature) {
+	return feature.geometry.type == "Point";
+});
+
+// Get all of the point stops
+var points = data.features.filter(function(feature) {
+	return feature.geometry.type == "Point";
+});
+
+// Find the walking route
+var routeFeature = data.features.find(function(feature) {
+	return feature.geometry.type == "LineString";
+});
+
+// Convert the LineString into a Turf line
+var walkingRoute = turf.lineString(routeFeature.geometry.coordinates);
+
+// Find where each stop falls along the walking route
+var stopDistances = points.map(function(point) {
+
+	var snappedPoint = turf.nearestPointOnLine(
+		walkingRoute,
+		turf.point(point.geometry.coordinates),
+		{ units: "feet" }
+	);
+
+	return snappedPoint.properties.location;
+});
+
+
+// Create the map points
+var myStops = L.geoJson(data, {
+
+	filter: function(feature) {
+		return feature.geometry.type == "Point";
+	},
+
+	pointToLayer: function(feature, latlng) {
+
+		var index = points.indexOf(feature);
+
+		// Starting point
+		if(index === 0) {
+			return L.marker(latlng, {
+				icon: L.divIcon({
+					className: 'start-marker',
+					html: '<i class="fa-solid fa-location-dot"></i>',
+					iconSize: [30, 40],
+					iconAnchor: [15, 40]
+				})
+			});
+		}
+
+		// Ending point
+		if(index === points.length - 1) {
+			return L.marker(latlng, {
+				icon: L.divIcon({
+					className: 'end-marker',
+					html: '<i class="fa-solid fa-location-dot"></i>',
+					iconSize: [30, 40],
+					iconAnchor: [15, 40]
+				})
+			});
+		}
+
+		// Regular stops
+		return L.marker(latlng);
+	},
+
+	onEachFeature: function(feature, layer) {
+
+		var index = points.indexOf(feature);
+
+		var tooltipContent =
+			"<div class='stop-tooltip'>" +
+			"<h3>" + feature.properties['name'] + "</h3>" +
+			"<p>" + feature.properties['description'] + "</p>";
+
+		// Add walking distance to the next stop
+		if(index < points.length - 1) {
+
+			var distanceFeet =
+				Math.abs(
+					stopDistances[index + 1] -
+					stopDistances[index]
+				);
+
+			tooltipContent +=
+				"<p><strong>Walking distance to next stop:</strong> " +
+				Math.round(distanceFeet) +
+				" feet</p>";
+		}
+
+		tooltipContent += "</div>";
+
+		layer.bindTooltip(tooltipContent, {
+			direction: 'top',
+			offset: [0, -10]
+		});
+	}
+
+}).addTo(map);
+		
+	</script>
+
+</body>
+
+</html>
